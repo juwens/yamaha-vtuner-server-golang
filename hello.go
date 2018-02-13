@@ -1,13 +1,15 @@
 package main
- 
+
 import (
     "fmt"
     "io"
     "log"
     "net/http"
     "encoding/xml"
+    "encoding/json"
     "strings"
-//    "html/template"
+    "time"
+    "io/ioutil"
 )
 
 type Item struct {
@@ -34,22 +36,29 @@ type FirebaseConfig struct {
     databaseURL string
     baseRef string
     dbSecret string
-  }
+}
+
+type FirebaseItem struct {
+    Item Item
+    Key string
+}
+
+var (
+    Items []Item
+)
 
 func loginxml(w http.ResponseWriter, r *http.Request) {
     io.WriteString(w, "todo");
 }
 
 func favxml(w http.ResponseWriter, r *http.Request) {
-    i1 := &Item {StationName: "Flux FM", StationType: "Station", StationUrl: "www.irgendwas.de" };
-    i2 := &Item {StationName: "radio eins", StationType: "Station", StationUrl: "www.irgendwas.de" };
     los := &ListOfItems {};
-    los.Item = []Item {*i1, *i2};
+    los.Item = Items;
     los.ItemCount = 9;
     output, err := xml.MarshalIndent(los, "", "  ");
-	if err != nil {
-		fmt.Printf("error: %v\n", err)
-	}
+    if err != nil {
+        fmt.Printf("error: %v\n", err)
+    }
 
     io.WriteString(w, xml.Header);
     w.Write(output);
@@ -62,7 +71,37 @@ func CaselessMatcher(h http.Handler) http.Handler {
     })
 }
 
+func loadItems() {
+    dbSecret := "<...>"
+    urlBase := "https://<...>.firebaseio.com/production/.json"
+    url := urlBase + "?auth=" + dbSecret
+    myClient := &http.Client{Timeout: 10 * time.Second}
+    resp, err := myClient.Get(url)
+    if err != nil {
+        fmt.Println(err)
+        fmt.Println("request failed")
+	return
+    }
+    defer resp.Body.Close()
+    body, err := ioutil.ReadAll(resp.Body)
+
+    var data []FirebaseItem
+    err = json.Unmarshal(body, &data)
+    if err != nil {
+        fmt.Println("decoding failed")
+        fmt.Println(err)
+	return
+    }
+
+    Items = make([]Item, len(data))
+    for i, item := range data {
+        Items[i] = item.Item
+    }
+}
+
 func main() {
+    loadItems()
+
     mux := http.NewServeMux()
     http.Handle("/", CaselessMatcher(mux))
 
