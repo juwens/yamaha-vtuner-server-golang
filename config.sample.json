@@ -1,0 +1,22 @@
+{
+  "VtunerConfig": {
+    "EncryptedToken" : "abcdef",
+    "HttpPort": 8080,
+    "ReceiverMacAddress": "abcdef",
+    "DnsServer": "8.8.8.8",
+    "VtunerServerOne": "foobar.com",
+    "VtunerServerTwo": "foobar2.com",
+    "DnsPort": 53
+  },
+  "FirebaseConfig": {
+    "databaseURL": "https://<project>.firebaseio.com",
+    "baseRef": "<ref>",
+    "dbSecret": "<secret>"
+  },
+  "Logging": {
+    "IncludeScopes": false,
+    "LogLevel": {
+      "Default": "Warning"
+    }
+  }
+}
